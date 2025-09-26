@@ -1,0 +1,60 @@
+from __future__ import annotations
+
+import asyncio
+from typing import Dict, Optional
+
+from .agent import SAMAgent
+from .builder import AgentBuilder
+from .context import RequestContext
+
+
+class AgentFactory:
+    """Build and cache agents for specific request contexts.
+
+    The default behavior matches the previous singleton semantics: if no
+    context is supplied, the factory returns a shared agent built once per
+    process. Hosted services can provide user-specific contexts to isolate
+    configuration, secure storage, and session state per caller.
+    """
+
+    def __init__(self, builder: Optional[AgentBuilder] = None) -> None:
+        self._builder = builder or AgentBuilder()
+        self._agents: Dict[str, SAMAgent] = {}
+        self._lock = asyncio.Lock()
+
+    async def get_agent(self, context: Optional[RequestContext] = None) -> SAMAgent:
+        ctx = context or RequestContext()
+        cache_key = ctx.cache_key()
+        if cache_key in self._agents:
+            return self._agents[cache_key]
+
+        async with self._lock:
+            # Double-check inside the lock to avoid duplicate builds
+            agent = self._agents.get(cache_key)
+            if agent is not None:
+                return agent
+            # Pass session_id from context if available
+            session_id = getattr(ctx, 'session_id', None)
+            agent = await self._builder.build(context=ctx, session_id=session_id)
+            self._agents[cache_key] = agent
+            return agent
+
+    async def clear(self, context: Optional[RequestContext] = None) -> None:
+        """Dispose a cached agent for the given context (or the default)."""
+        ctx = context or RequestContext()
+        cache_key = ctx.cache_key()
+        agent = self._agents.pop(cache_key, None)
+        if agent is not None:
+            try:
+                await agent.close()
+            except Exception:
+                pass
+
+_default_factory: Optional[AgentFactory] = None
+
+
+def get_default_factory() -> AgentFactory:
+    global _default_factory
+    if _default_factory is None:
+        _default_factory = AgentFactory()
+    return _default_factory
