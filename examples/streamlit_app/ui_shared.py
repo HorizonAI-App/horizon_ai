@@ -67,9 +67,26 @@ def run_sync(coro):
 
 
 def get_local_context() -> RequestContext:
-    """Return a request context suitable for local Streamlit usage."""
+    """Return a request context suitable for local Streamlit usage with proper user isolation."""
     session_id = st.session_state.get("session_id", "default")
-    return RequestContext(user_id="local-streamlit", session_id=session_id)
+    
+    # Generate unique user ID based on browser session
+    # This ensures each browser session gets isolated data
+    if "user_id" not in st.session_state:
+        import hashlib
+        import secrets
+        
+        # Create a unique user ID based on browser session
+        # Use Streamlit's session state ID + a random component
+        browser_session_id = st.session_state.get("_browser_session_id", secrets.token_hex(16))
+        st.session_state["_browser_session_id"] = browser_session_id
+        
+        # Create a deterministic but unique user ID
+        user_id = hashlib.sha256(f"horizon-{browser_session_id}".encode()).hexdigest()[:16]
+        st.session_state["user_id"] = user_id
+    
+    user_id = st.session_state["user_id"]
+    return RequestContext(user_id=user_id, session_id=session_id)
 
 
 @st.cache_resource(show_spinner=False)
@@ -92,4 +109,4 @@ def clear_agent_cache():
     run_sync(_clear())
 
 
-# Agent scheduler starts automatically when first accessed - no marker needed
+# Agent starts automatically when first accessed - no marker needed

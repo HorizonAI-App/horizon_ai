@@ -30,7 +30,6 @@ from ..integrations.polymarket import PolymarketTools, create_polymarket_tools
 from ..integrations.aster_futures import AsterFuturesClient, create_aster_futures_tools
 from ..integrations.smart_trader import SmartTrader, create_smart_trader_tools
 from ..integrations.frontend_auth import register as register_frontend_auth
-from ..integrations.scheduler_tools import register as register_scheduler_tools
 from .plugins import load_plugins
 
 logger = logging.getLogger(__name__)
@@ -364,9 +363,6 @@ class AgentBuilder:
         # Register frontend authentication tools (always available for web app)
         register_frontend_auth(tools, agent=agent)
         
-        # Register simple scheduler tools (always available - this actually works!)
-        from ..integrations.simple_scheduler_tools import register as register_simple_scheduler_tools
-        register_simple_scheduler_tools(tools, agent=agent)
 
         # Register integrations behind flags
         if Settings.ENABLE_SOLANA_TOOLS:
@@ -454,14 +450,6 @@ class AgentBuilder:
         setattr(agent, "_aster_client", aster_client)
         setattr(agent, "_llm", llm)
 
-        # Start scheduler worker for scheduled transactions
-        try:
-            from ..core.scheduler import get_scheduler_manager
-            scheduler = await get_scheduler_manager()
-            await scheduler.start_worker()
-            logger.info("Scheduler worker started")
-        except Exception as e:
-            logger.warning(f"Failed to start scheduler worker: {e}")
 
         logger.info(f"Agent built with {len(tools.list_specs())} tools")
         return agent

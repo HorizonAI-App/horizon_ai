@@ -19,21 +19,42 @@ from ui_shared import (  # noqa: E402
 )
 
 
-st.set_page_config(
-    page_title="Horizon Chat", page_icon="🌅", layout="wide", initial_sidebar_state="expanded"
-)
+# Set page config with logo
+try:
+    logo_path = Path(__file__).parent.parent.parent / "logo.png"
+    if logo_path.exists():
+        st.set_page_config(
+            page_title="Horizon Chat", page_icon=str(logo_path), layout="wide", initial_sidebar_state="expanded"
+        )
+    else:
+        st.set_page_config(
+            page_title="Horizon Chat", page_icon="🌅", layout="wide", initial_sidebar_state="expanded"
+        )
+except Exception:
+    st.set_page_config(
+        page_title="Horizon Chat", page_icon="🌅", layout="wide", initial_sidebar_state="expanded"
+    )
 
 inject_css()
 ensure_session_init()
 ensure_env_loaded()
 agent_ready_marker()
-# Agent scheduler starts automatically when first accessed
+# Agent starts automatically when first accessed
 
 
 def render_chat():
     col1, col2 = st.columns([6, 2])
     with col1:
-        st.title("🌅 Horizon Agent")
+        # Display Horizon logo
+        try:
+            logo_path = Path(__file__).parent.parent.parent / "logo.png"
+            if logo_path.exists():
+                st.image(str(logo_path), width=100)
+                st.title("Horizon Agent")
+            else:
+                st.title("🌅 Horizon Agent")  # Fallback to emoji
+        except Exception:
+            st.title("🌅 Horizon Agent")  # Fallback to emoji
         st.caption("AI-Powered Solana Agent — Chat")
         # Show active session id inline (no sidebar)
         try:
@@ -241,7 +262,7 @@ def render_chat():
             else:
                 st.markdown(m["content"])
 
-    user_input = st.chat_input("Ask SAM…", disabled=st.session_state.get("processing", False))
+    user_input = st.chat_input("ASK HORIZON", disabled=st.session_state.get("processing", False))
     if not user_input:
         return
 

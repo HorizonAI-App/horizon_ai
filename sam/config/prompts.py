@@ -34,9 +34,6 @@ TOOL SELECTION GUIDE:
 - get_token_pairs(token_address) - Get pairs for token
 - get_trending_pairs(chain) - Trending tokens
 
-⏰ SCHEDULED TRANSACTIONS (Simple & Reliable):
-- simple_schedule(task_type, execute_in_minutes, task_data) - Schedule a task to execute in X minutes (this actually works!)
-- simple_get_tasks() - View all scheduled tasks
 
 CRITICAL EXECUTION RULES:
 - CALL EACH TOOL ONLY ONCE per user request

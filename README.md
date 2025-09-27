@@ -1,36 +1,77 @@
-# 🌅 Horizon - AI-Powered Solana Agent Framework
+# 🌅 Horizon
 
-**Horizon** is a production-ready AI agent framework for Solana blockchain operations, built on the SAM (Solana Agent Middleware) framework. It provides intelligent automation for trading, portfolio management, market analysis, and scheduled transactions.
+<div align="center">
+  <img src="logo.png" alt="Horizon Logo" height="200" width="200"/>
+  
+  **THE AI TACTICIAN FOR ONCHAIN TRADING**
+  
+  *Eliminate manual execution and constant monitoring. Manage complex, time-sensitive transactions and execute optimal trading strategies autonomously.*
+</div>
 
-## 🎯 Problem Statement
+---
 
-Traditional DeFi interactions require constant monitoring, manual execution, and complex timing decisions. Users need to:
-- Monitor market conditions 24/7
-- Execute trades at optimal times
-- Manage complex portfolio strategies
-- Handle time-sensitive transactions
+## 🎯 What is Horizon?
 
-**Horizon solves this** by providing an AI agent that can understand natural language commands and execute blockchain operations autonomously.
+Horizon is an AI-powered trading agent that transforms how you interact with the Solana blockchain. Instead of manually monitoring markets and executing trades, Horizon understands natural language commands and autonomously manages your onchain operations.
+
+### The Problem We Solve
+
+Traditional DeFi trading requires:
+- ⏰ **24/7 Market Monitoring** - Constant attention to price movements
+- 🎯 **Perfect Timing** - Executing trades at optimal moments
+- 🔄 **Complex Strategies** - Managing multiple positions and rebalancing
+- ⚡ **Time-Sensitive Actions** - Reacting to market conditions instantly
+
+**Horizon eliminates these challenges** by providing an intelligent agent that can understand your trading intentions and execute them autonomously.
+
+---
+
+## 🚀 Key Features
+
+### 🤖 **AI-Powered Trading**
+- Natural language command processing
+- Intelligent trade execution
+- Context-aware decision making
+- Autonomous portfolio management
+
+### 🔧 **Comprehensive Tool Suite**
+- **Wallet Management**: Balance checks, transfers, portfolio overview
+- **Token Trading**: Buy/sell via Jupiter DEX and Pump.fun
+- **Market Analysis**: Real-time prices, trending tokens, pair analysis
+- **Research Tools**: Web search for market intelligence
+- **Prediction Markets**: Polymarket integration for market sentiment
+
+### 🔐 **Enterprise-Grade Security**
+- Encrypted private key storage
+- Secure transaction validation
+- Rate limiting and safety limits
+- Comprehensive error handling
+
+### 📊 **Real-Time Intelligence**
+- Live market data integration
+- DexScreener analytics
+- Price monitoring and alerts
+- Market trend analysis
+
+---
 
 ## 🏗️ Architecture
-
-### Core Components
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Horizon Frontend                         │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │   Chat Interface│  │  Wallet Manager │  │  Scheduled   │ │
-│  │   (Streamlit)   │  │                 │  │  Transactions│ │
+│  │   Chat Interface│  │  Wallet Manager │  │  Market      │ │
+│  │   (Streamlit)   │  │                 │  │  Analytics   │ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    SAM Framework                            │
+│                    AI Agent Core                            │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │   AI Agent      │  │   Tool Registry │  │  Memory      │ │
-│  │   (LLM)         │  │   (15+ Tools)   │  │  Management  │ │
+│  │   LLM Engine    │  │   Tool Registry │  │  Memory      │ │
+│  │   (OpenAI/Claude│  │   (15+ Tools)   │  │  Management  │ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -48,14 +89,7 @@ Traditional DeFi interactions require constant monitoring, manual execution, and
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Key Features
-
-- **🤖 AI Agent**: Natural language understanding and execution
-- **🔧 15+ Tools**: Comprehensive blockchain operation toolkit
-- **⏰ Scheduled Transactions**: Time-based automation
-- **🔐 Secure Storage**: Encrypted private key management
-- **📊 Real-time Data**: Live market prices and analytics
-- **🎨 Modern UI**: Beautiful Streamlit interface
+---
 
 ## 🚀 Quick Start
 
@@ -69,7 +103,7 @@ Traditional DeFi interactions require constant monitoring, manual execution, and
 
 ```bash
 # Clone the repository
-git clone https://github.com/MakindeAhmed2110/horizon.git
+git clone https://github.com/horizonai-app/horizon_ai/
 cd horizon
 
 # Install dependencies
@@ -82,7 +116,7 @@ cp .env.example .env
 
 ### Configuration
 
-Create a `.env` file with:
+Create a `.env` file with your credentials:
 
 ```bash
 # Required
@@ -91,8 +125,6 @@ LLM_PROVIDER=openai  # or anthropic, xai
 
 # LLM API Keys
 OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-XAI_API_KEY=xai-...
 
 # Optional
 SAM_SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
@@ -110,41 +142,60 @@ uv run streamlit run examples/streamlit_app/app.py
 uv run sam
 ```
 
+---
+
 ## 💡 Usage Examples
 
-### Chat Interface
+### Natural Language Trading
 
 ```
 User: "Check my wallet balance"
-Agent: "Your wallet contains 2.5 SOL ($500) and 3 tokens..."
+Horizon: "Your wallet contains 2.5 SOL ($500) and 3 tokens:
+         - BONK: 1,000,000 tokens ($25)
+         - WIF: 500 tokens ($150)
+         - USDC: 100 tokens ($100)"
 
 User: "Buy 0.1 SOL worth of BONK"
-Agent: "Executing buy order for 0.1 SOL worth of BONK..."
+Horizon: "Executing buy order for 0.1 SOL worth of BONK...
+         ✅ Successfully purchased 4,000 BONK tokens"
 
-User: "Schedule a transfer of 1 SOL to [address] in 1 hour"
-Agent: "Transaction scheduled for execution in 1 hour..."
+User: "What's trending on Solana right now?"
+Horizon: "Current trending tokens on Solana:
+         1. WIF - $0.30 (+15% in 24h)
+         2. BONK - $0.000025 (+8% in 24h)
+         3. POPCAT - $0.45 (+22% in 24h)"
 ```
 
-### Scheduled Transactions
+### Advanced Trading Strategies
 
-Horizon includes a powerful scheduling system:
+```
+User: "Set up a DCA strategy for SOL"
+Horizon: "I'll help you set up Dollar Cost Averaging for SOL.
+         How much SOL do you want to invest per interval?"
 
-- **Time-based execution**: "in 5 minutes", "tomorrow at 2 PM"
-- **Condition-based execution**: Price targets, market conditions
-- **Recurring transactions**: Daily, weekly, monthly
-- **Real-time monitoring**: Live status updates
+User: "Research the latest news about Jupiter token"
+Horizon: "🔍 Researching Jupiter token...
+         📰 Latest news: Jupiter announces new features...
+         📊 Market sentiment: Bullish (+12% in 24h)
+         💡 Recommendation: Consider accumulating on dips"
+```
 
-### Available Tools
+---
 
-| Tool | Description | Example |
-|------|-------------|---------|
-| `get_balance` | Check wallet balance | "Show my SOL balance" |
-| `transfer_sol` | Send SOL | "Send 0.5 SOL to [address]" |
-| `swap` | Token swaps via Jupiter | "Swap 1 SOL to USDC" |
-| `pump_fun_buy` | Buy meme tokens | "Buy 0.1 SOL of [token]" |
-| `get_token_price` | Get token prices | "What's the price of BONK?" |
-| `simple_schedule` | Schedule transactions | "Schedule a buy in 10 minutes" |
-| `search_web` | Web research | "Research [token] news" |
+## 🛠️ Available Tools
+
+| Category | Tool | Description | Example |
+|----------|------|-------------|---------|
+| **Wallet** | `get_balance` | Check wallet balance | "Show my SOL balance" |
+| **Trading** | `transfer_sol` | Send SOL | "Send 0.5 SOL to [address]" |
+| **Trading** | `swap` | Token swaps via Jupiter | "Swap 1 SOL to USDC" |
+| **Trading** | `pump_fun_buy` | Buy meme tokens | "Buy 0.1 SOL of [token]" |
+| **Analysis** | `get_token_price` | Get token prices | "What's the price of BONK?" |
+| **Analysis** | `get_trending_pairs` | Trending tokens | "Show trending Solana tokens" |
+| **Research** | `search_web` | Web research | "Research [token] news" |
+| **Prediction** | `polymarket_search` | Prediction markets | "What do markets think about [event]?" |
+
+---
 
 ## 🔧 Development
 
@@ -152,7 +203,7 @@ Horizon includes a powerful scheduling system:
 
 ```
 horizon/
-├── sam/                    # Core SAM framework
+├── sam/                    # Core framework
 │   ├── core/              # Agent, LLM, memory, tools
 │   ├── integrations/      # Blockchain integrations
 │   ├── config/            # Settings and prompts
@@ -199,6 +250,8 @@ uv run pytest tests/ --cov=sam
 uv run pytest tests/test_tools.py::test_balance_check
 ```
 
+---
+
 ## 🔐 Security
 
 - **Private Key Encryption**: Fernet encryption with OS keyring integration
@@ -207,12 +260,16 @@ uv run pytest tests/test_tools.py::test_balance_check
 - **Transaction Limits**: Configurable safety limits
 - **Error Handling**: Comprehensive error management
 
+---
+
 ## 📊 Performance
 
 - **Async Architecture**: Non-blocking operations
 - **Connection Pooling**: Efficient RPC connections
 - **Caching**: Smart caching for frequently accessed data
 - **Memory Management**: Context compression for long sessions
+
+---
 
 ## 🤝 Contributing
 
@@ -229,9 +286,13 @@ uv run pytest tests/test_tools.py::test_balance_check
 - Async-first architecture
 - Comprehensive error handling
 
+---
+
 ## 📄 License
 
 MIT License - see LICENSE file for details.
+
+---
 
 ## 🏆 Hackathon Submission
 
@@ -251,13 +312,35 @@ MIT License - see LICENSE file for details.
 
 [Link to live demo instance]
 
+---
+
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](./docs/) directory:
+
+- **[AI Agent Architecture](./docs/ai-agent-architecture.md)** - Core system architecture and components
+- **[Tool System](./docs/tool-system.md)** - Tool development and management guide
+- **[LLM Integration](./docs/llm-integration.md)** - Language model integration details
+- **[Security Architecture](./docs/security-architecture.md)** - Security implementation and best practices
+- **[Documentation Overview](./docs/README.md)** - Complete documentation index
+
 ## 📞 Support
 
-- **Documentation**: [Link to docs]
-- **Discord**: [Link to Discord]
+- **Documentation**: [Complete docs in `docs/` directory](./docs/)
+- **Discord**: [https://discord.gg/thatweb3gee]
 - **Twitter**: [@HorizonSolana]
 - **Email**: support@horizon-solana.com
 
 ---
 
-**Built with ❤️ for the Solana ecosystem**
+## 🙏 Acknowledgments
+
+Horizon is built on the SAM Framework - a production-ready AI agent middleware for Solana blockchain operations.
+
+---
+
+<div align="center">
+  **Built with ❤️ for the Solana ecosystem**
+  
+  *Horizon - Where AI meets DeFi*
+</div>
