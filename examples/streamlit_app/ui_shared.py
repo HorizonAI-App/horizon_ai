@@ -70,22 +70,17 @@ def get_local_context() -> RequestContext:
     """Return a request context suitable for local Streamlit usage with proper user isolation."""
     session_id = st.session_state.get("session_id", "default")
     
-    # Generate unique user ID based on browser session
-    # This ensures each browser session gets isolated data
-    if "user_id" not in st.session_state:
-        import hashlib
-        import secrets
-        
-        # Create a unique user ID based on browser session
-        # Use Streamlit's session state ID + a random component
-        browser_session_id = st.session_state.get("_browser_session_id", secrets.token_hex(16))
-        st.session_state["_browser_session_id"] = browser_session_id
-        
-        # Create a deterministic but unique user ID
-        user_id = hashlib.sha256(f"horizon-{browser_session_id}".encode()).hexdigest()[:16]
-        st.session_state["user_id"] = user_id
+    # Generate unique user ID that's truly isolated per browser session
+    # This ensures complete user isolation by not caching user_id in session state
+    import hashlib
+    import secrets
+    import time
     
-    user_id = st.session_state["user_id"]
+    # Create a unique identifier that changes for each new browser session
+    # Use timestamp + random data + session state ID for maximum uniqueness
+    browser_fingerprint = f"{time.time()}-{secrets.token_hex(8)}-{id(st.session_state)}"
+    user_id = hashlib.sha256(f"horizon-{browser_fingerprint}".encode()).hexdigest()[:16]
+    
     return RequestContext(user_id=user_id, session_id=session_id)
 
 
