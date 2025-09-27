@@ -144,6 +144,141 @@ uv run sam
 
 ---
 
+## 🔄 User Flow
+
+### Getting Started with Horizon
+
+```mermaid
+graph TD
+    A[🚀 Launch Horizon] --> B[🔐 Connect Wallet]
+    B --> C[💬 Start Chatting]
+    C --> D{What do you want to do?}
+    
+    D -->|Check Balance| E[💰 get_balance]
+    D -->|Buy Token| F[🛒 smart_buy]
+    D -->|Sell Token| G[💸 pump_fun_sell]
+    D -->|DeFi Strategy| H[🎯 DeFi Analysis]
+    D -->|Market Research| I[📊 Market Tools]
+    
+    E --> J[📈 View Results]
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+    
+    J --> K{Need more help?}
+    K -->|Yes| C
+    K -->|No| L[✅ Done]
+```
+
+### Typical User Journey
+
+#### 1. **Initial Setup** 🏁
+```
+User: "I want to start trading with Horizon"
+Horizon: "Welcome! Let's get your wallet connected and check your balance."
+→ User provides private key
+→ Horizon: "Wallet connected! You have 5.2 SOL ($1,040) ready to trade."
+```
+
+#### 2. **Portfolio Check** 📊
+```
+User: "What's in my wallet?"
+Horizon: "Your portfolio:
+         💰 SOL: 5.2 ($1,040)
+         🪙 BONK: 1M tokens ($25)
+         🪙 RAY: 50 tokens ($15)
+         Total Value: $1,080"
+```
+
+#### 3. **Token Discovery** 🔍
+```
+User: "Find me trending tokens"
+Horizon: "Here are today's trending tokens:
+         🚀 PEPE: +45% (High volume)
+         🎯 DOGE: +23% (Stable growth)
+         ⚡ SHIB: +67% (Volatile)
+         Would you like to analyze any of these?"
+```
+
+#### 4. **Smart Trading** 🤖
+```
+User: "Buy 0.1 SOL of PEPE"
+Horizon: "Executing trade...
+         ✅ Bought 1,250,000 PEPE tokens for 0.1 SOL
+         💰 Remaining balance: 5.1 SOL
+         📊 Position: +2.3% in 5 minutes"
+```
+
+#### 5. **DeFi Strategy** 🎯
+```
+User: "Create a DeFi strategy for 2 SOL"
+Horizon: "Analyzing opportunities...
+         🏛️ Recommended allocation:
+         • Raydium LP (SOL/USDC): 40% - 12.5% APY
+         • Orca Yield Farm: 35% - 18.7% APY  
+         • Solend Lending: 25% - 8.2% APY
+         Expected portfolio APY: 13.8%"
+```
+
+#### 6. **Risk Management** 🛡️
+```
+User: "What's my risk exposure?"
+Horizon: "Portfolio risk assessment:
+         🟢 Low Risk: 25% (Lending)
+         🟡 Medium Risk: 40% (LP)
+         🔴 High Risk: 35% (Yield farming)
+         Overall: Moderate risk profile
+         💡 Consider diversifying across more platforms"
+```
+
+### Advanced User Flows
+
+#### **DeFi Portfolio Management**
+```
+1. User: "Analyze my DeFi positions"
+2. Horizon: Scans all positions across platforms
+3. User: "Rebalance my portfolio"
+4. Horizon: Calculates optimal allocation
+5. User: "Execute rebalancing"
+6. Horizon: Executes trades across platforms
+```
+
+#### **Market Research & Trading**
+```
+1. User: "Research trending memecoins"
+2. Horizon: Analyzes market data and social sentiment
+3. User: "What's the best entry point for PEPE?"
+4. Horizon: Provides technical analysis and recommendations
+5. User: "Buy 0.05 SOL with 3% slippage"
+6. Horizon: Executes trade with specified parameters
+```
+
+#### **Yield Optimization**
+```
+1. User: "Find the best yield opportunities"
+2. Horizon: Scans all DeFi platforms for yields
+3. User: "Create a yield strategy for 5 SOL"
+4. Horizon: Designs diversified yield portfolio
+5. User: "Implement the strategy"
+6. Horizon: Executes all positions automatically
+```
+
+### Key User Interactions
+
+| **User Intent** | **Horizon Action** | **Tools Used** |
+|-----------------|-------------------|----------------|
+| Check balance | Show complete portfolio | `get_balance()` |
+| Buy token | Execute smart buy | `smart_buy()` |
+| Sell token | Execute sell order | `pump_fun_sell()` |
+| Find yields | Scan opportunities | `get_defi_yield_opportunities()` |
+| Analyze token | DeFi potential analysis | `analyze_token_defi_potential()` |
+| Portfolio strategy | Create allocation plan | `create_defi_portfolio_strategy()` |
+| Market research | Search and analyze | `search_pairs()`, `get_trending_pairs()` |
+| Risk assessment | Evaluate positions | Multiple analysis tools |
+
+---
+
 ## 💡 Usage Examples
 
 ### Natural Language Trading

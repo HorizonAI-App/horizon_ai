@@ -30,6 +30,7 @@ from ..integrations.polymarket import PolymarketTools, create_polymarket_tools
 from ..integrations.aster_futures import AsterFuturesClient, create_aster_futures_tools
 from ..integrations.smart_trader import SmartTrader, create_smart_trader_tools
 from ..integrations.frontend_auth import register as register_frontend_auth
+from ..integrations.defi_strategy_tools import register as register_defi_strategy_tools
 from .plugins import load_plugins
 
 logger = logging.getLogger(__name__)
@@ -362,6 +363,9 @@ class AgentBuilder:
 
         # Register frontend authentication tools (always available for web app)
         register_frontend_auth(tools, agent=agent)
+        
+        # Register DeFi strategy tools (always available)
+        register_defi_strategy_tools(tools, agent=agent)
         
 
         # Register integrations behind flags
