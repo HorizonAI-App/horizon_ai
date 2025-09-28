@@ -33,9 +33,7 @@ class AgentFactory:
             agent = self._agents.get(cache_key)
             if agent is not None:
                 return agent
-            # Pass session_id from context if available
-            session_id = getattr(ctx, 'session_id', None)
-            agent = await self._builder.build(context=ctx, session_id=session_id)
+            agent = await self._builder.build(context=ctx, session_id=ctx.session_id)
             self._agents[cache_key] = agent
             return agent
 

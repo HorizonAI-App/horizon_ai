@@ -111,7 +111,35 @@ class SolanaTools:
 
     async def has_wallet(self) -> bool:
         """Check if wallet is configured for this session."""
+        # If no wallet is set but we have a session_id, try to auto-retrieve
+        if not self.keypair and self.session_id:
+            await self._auto_retrieve_private_key()
+        
         return self.keypair is not None and self.wallet_address is not None
+
+    async def _auto_retrieve_private_key(self) -> bool:
+        """Automatically retrieve private key from PrivateKeyManager if available."""
+        if not self.session_id:
+            return False
+        
+        try:
+            from sam.core.private_key_manager import PrivateKeyManager
+            from sam.utils.secure_storage import get_secure_storage
+            
+            private_key_manager = PrivateKeyManager(get_secure_storage())
+            private_key = await private_key_manager.get_private_key(self.session_id)
+            
+            if private_key:
+                self._initialize_keypair(private_key)
+                logger.info(f"Auto-retrieved private key for session {self.session_id}")
+                return True
+            else:
+                logger.debug(f"No private key found for session {self.session_id}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Failed to auto-retrieve private key for session {self.session_id}: {e}")
+            return False
 
     async def _get_client(self) -> AsyncClient:
         """Get or (re)create AsyncClient bound to current loop."""
@@ -152,6 +180,10 @@ class SolanaTools:
 
     async def get_balance(self, address: Optional[str] = None) -> Dict[str, Any]:
         """Get SOL balance and all SPL token balances for an address or the configured wallet."""
+        # Auto-retrieve private key from PrivateKeyManager if not set
+        if not self.keypair and self.session_id:
+            await self._auto_retrieve_private_key()
+        
         target_address = address or self.wallet_address
         if not target_address:
             return {"error": "No address provided and no wallet configured"}
@@ -257,6 +289,10 @@ class SolanaTools:
 
     async def transfer_sol(self, to_address: str, amount: float) -> Dict[str, Any]:
         """Transfer SOL to another address."""
+        # Auto-retrieve private key from PrivateKeyManager if not set
+        if not self.keypair and self.session_id:
+            await self._auto_retrieve_private_key()
+        
         if not self.keypair or not self.wallet_address:
             return {
                 "error": "No wallet configured for transfers",
@@ -331,6 +367,10 @@ class SolanaTools:
 
     async def get_token_accounts(self, address: Optional[str] = None) -> Dict[str, Any]:
         """Get token accounts for an address."""
+        # Auto-retrieve private key from PrivateKeyManager if not set
+        if not self.keypair and self.session_id:
+            await self._auto_retrieve_private_key()
+        
         try:
             target_address = address or self.wallet_address
             if not target_address:

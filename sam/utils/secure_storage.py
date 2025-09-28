@@ -27,6 +27,9 @@ class BaseSecretStore(Protocol):
     def get_private_key(self, user_id: str) -> Optional[str]:
         ...
 
+    def has_private_key(self, user_id: str) -> bool:
+        ...
+
     def delete_private_key(self, user_id: str) -> bool:
         ...
 
@@ -437,6 +440,20 @@ class SecureStorage(BaseSecretStore):
         except Exception as exc:
             logger.error(f"Failed to decrypt private key for {user_id}: {exc}")
             return None
+
+    def has_private_key(self, user_id: str) -> bool:
+        """Check if a private key exists for the user without decrypting it."""
+        try:
+            # Check keyring first
+            encrypted_key = keyring.get_password(self.service_name, f"private_key_{user_id}")
+            if encrypted_key:
+                return True
+        except Exception as e:
+            logger.debug(f"Failed to check keyring for private key {user_id}: {e}")
+        
+        # Check fallback store
+        fallback_key = self._fallback_store.get(f"private_key_{user_id}")
+        return fallback_key is not None
 
     def delete_private_key(self, user_id: str) -> bool:
         """Delete private key from keyring."""

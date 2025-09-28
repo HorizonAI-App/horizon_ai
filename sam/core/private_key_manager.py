@@ -17,6 +17,13 @@ from sam.utils.validators import validate_solana_private_key
 from sam.utils.error_handling import handle_errors
 from sam.utils.error_messages import handle_error_gracefully
 
+# Import streamlit for browser fingerprinting
+try:
+    import streamlit as st
+except ImportError:
+    # Fallback for non-streamlit environments
+    st = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,9 +64,11 @@ class PrivateKeyManager:
             # Store in session cache
             self._session_keys[session_id] = encrypted_key
             
-            # Also store in secure storage for persistence
-            # Use the session_id as the user_id for secure storage
-            success = self.secure_storage.store_private_key(session_id, private_key)
+            # Create browser-specific storage key to prevent cross-profile access
+            browser_specific_key = self._create_browser_specific_key(session_id)
+            
+            # Store in secure storage with browser-specific key
+            success = self.secure_storage.store_private_key(browser_specific_key, private_key)
             if not success:
                 return {
                     "success": False,
@@ -100,8 +109,9 @@ class PrivateKeyManager:
                 private_key = self._decrypt_private_key(encrypted_key, session_key)
                 return private_key
             else:
-                # Try to load from secure storage
-                private_key = self.secure_storage.get_private_key(session_id)
+                # Try to load from secure storage using browser-specific key
+                browser_specific_key = self._create_browser_specific_key(session_id)
+                private_key = self.secure_storage.get_private_key(browser_specific_key)
                 if private_key:
                     # Store in session cache for future use
                     session_key = self._generate_session_key(session_id)
@@ -129,8 +139,9 @@ class PrivateKeyManager:
             if session_id in self._session_keys:
                 del self._session_keys[session_id]
             
-            # Remove from secure storage
-            self.secure_storage.delete_private_key(session_id)
+            # Remove from secure storage using browser-specific key
+            browser_specific_key = self._create_browser_specific_key(session_id)
+            self.secure_storage.delete_private_key(browser_specific_key)
             
             return {
                 "success": True,
@@ -172,4 +183,33 @@ class PrivateKeyManager:
     
     async def has_private_key(self, session_id: str) -> bool:
         """Check if session has a stored private key."""
-        return await self.get_private_key(session_id) is not None
+        # Use browser-specific key for checking
+        browser_specific_key = self._create_browser_specific_key(session_id)
+        return self.secure_storage.has_private_key(browser_specific_key)
+    
+    def _create_browser_specific_key(self, session_id: str) -> str:
+        """Create a browser-specific storage key to prevent cross-profile access."""
+        import hashlib
+        
+        if st is not None:
+            # Create a persistent browser fingerprint that's consistent within a browser session
+            if "browser_fingerprint" not in st.session_state:
+                # Generate a unique fingerprint once per browser session
+                import secrets
+                import time
+                browser_id = f"{id(st.session_state)}-{secrets.token_hex(8)}"
+                st.session_state["browser_fingerprint"] = browser_id
+                print(f"🔑 Generated new browser fingerprint: {browser_id[:12]}...")
+            
+            browser_fingerprint = st.session_state["browser_fingerprint"]
+        else:
+            # Fallback for non-streamlit environments
+            browser_fingerprint = "cli-session"
+        
+        # Hash the fingerprint to create a consistent key
+        browser_hash = hashlib.sha256(f"browser-{browser_fingerprint}".encode()).hexdigest()[:16]
+        
+        # Combine with session ID to create unique storage key
+        storage_key = f"{session_id}-{browser_hash}"
+        print(f"🔑 Using storage key: {storage_key[:20]}...")
+        return storage_key

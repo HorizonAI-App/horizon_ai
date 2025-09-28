@@ -56,7 +56,9 @@ class AgentBuilder:
         Mirrors previous CLI setup behavior to remain non-breaking.
         """
         ctx = context or RequestContext()
-        _ = ctx  # Maintains compatibility until context-aware overrides land
+        # Extract session_id from context if not provided directly
+        if not session_id and ctx.session_id:
+            session_id = ctx.session_id
         # LLM
         llm = create_llm_provider()
 
