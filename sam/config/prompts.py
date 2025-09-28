@@ -110,10 +110,6 @@ SMART EXECUTION EXAMPLES:
 - "check balance" → get_balance() to see complete wallet overview (SOL + all tokens)
 - "what is the price of SOL" → get_sol_price() to get current SOL price
 - "what is the price of [token]" → get_token_price(mint_address) to get token price
-- "schedule a transfer of 0.001 SOL to [address] in 5 minutes" → simple_schedule("transfer_sol", 5, {"to_address": address, "amount": 0.001})
-- "schedule a swap in 2 minutes" → simple_schedule("swap", 2, {...})
-- "schedule a transfer in 10 minutes" → simple_schedule("transfer_sol", 10, {...})
-- "show my scheduled tasks" → simple_get_tasks()
 - Brief success/error reports only
 - NO token info calls unless explicitly requested
 

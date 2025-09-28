@@ -13,13 +13,11 @@ import json
 
 from sam.core.tools import Tool, ToolSpec
 from sam.core.context import RequestContext
-from sam.utils.error_handling import handle_error_gracefully
-from sam.utils.error_messages import get_error_message
+from sam.utils.error_messages import handle_error_gracefully
 
 logger = logging.getLogger(__name__)
 
 
-@handle_error_gracefully
 async def analyze_token_defi_potential(args: Dict[str, Any]) -> Dict[str, Any]:
     """
     Analyze a token's DeFi potential and provide investment strategy recommendations.
@@ -82,14 +80,9 @@ async def analyze_token_defi_potential(args: Dict[str, Any]) -> Dict[str, Any]:
         
     except Exception as e:
         logger.error(f"Error analyzing token DeFi potential: {e}")
-        return {
-            "success": False,
-            "error": get_error_message("analysis_failed"),
-            "error_detail": {"code": "token_analysis_error", "message": str(e)}
-        }
+        return handle_error_gracefully(e, {"context": "token_defi_analysis"})
 
 
-@handle_error_gracefully
 async def analyze_defi_platform(args: Dict[str, Any]) -> Dict[str, Any]:
     """
     Analyze a DeFi platform and provide strategy recommendations.
@@ -144,14 +137,9 @@ async def analyze_defi_platform(args: Dict[str, Any]) -> Dict[str, Any]:
         
     except Exception as e:
         logger.error(f"Error analyzing DeFi platform: {e}")
-        return {
-            "success": False,
-            "error": get_error_message("analysis_failed"),
-            "error_detail": {"code": "platform_analysis_error", "message": str(e)}
-        }
+        return handle_error_gracefully(e, {"context": "defi_platform_analysis"})
 
 
-@handle_error_gracefully
 async def get_defi_yield_opportunities(args: Dict[str, Any]) -> Dict[str, Any]:
     """
     Find the best DeFi yield opportunities on Solana.
@@ -204,14 +192,9 @@ async def get_defi_yield_opportunities(args: Dict[str, Any]) -> Dict[str, Any]:
         
     except Exception as e:
         logger.error(f"Error finding yield opportunities: {e}")
-        return {
-            "success": False,
-            "error": get_error_message("analysis_failed"),
-            "error_detail": {"code": "yield_analysis_error", "message": str(e)}
-        }
+        return handle_error_gracefully(e, {"context": "yield_opportunities"})
 
 
-@handle_error_gracefully
 async def create_defi_portfolio_strategy(args: Dict[str, Any]) -> Dict[str, Any]:
     """
     Create a comprehensive DeFi portfolio strategy.
@@ -276,11 +259,7 @@ async def create_defi_portfolio_strategy(args: Dict[str, Any]) -> Dict[str, Any]
         
     except Exception as e:
         logger.error(f"Error creating portfolio strategy: {e}")
-        return {
-            "success": False,
-            "error": get_error_message("analysis_failed"),
-            "error_detail": {"code": "portfolio_strategy_error", "message": str(e)}
-        }
+        return handle_error_gracefully(e, {"context": "portfolio_strategy"})
 
 
 # Helper functions for data gathering and analysis
