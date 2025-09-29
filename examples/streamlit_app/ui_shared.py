@@ -55,7 +55,7 @@ def run_sync(coro):
         return asyncio.run(coro)
     except RuntimeError:
         # If there's already an event loop running, create a new task
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         if loop.is_running():
             # Create a new task and wait for it
             import concurrent.futures
