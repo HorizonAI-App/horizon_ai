@@ -4,6 +4,12 @@ from pathlib import Path
 
 from sam.web.session import run_with_events, run_once, get_agent
 
+import os
+
+# Check if the secret exists and set the environment variable
+if "SAM_DB_PATH" in st.secrets:
+    os.environ["SAM_DB_PATH"] = st.secrets["SAM_DB_PATH"]
+
 # Ensure local module imports work when run via `streamlit run`
 _APP_DIR = Path(__file__).resolve().parent
 if str(_APP_DIR) not in sys.path:
