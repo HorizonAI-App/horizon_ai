@@ -40,11 +40,15 @@ except Exception:
 inject_css()
 ensure_session_init()
 ensure_env_loaded()
-agent_ready_marker()
-# Agent starts automatically when first accessed
+# Agent will be initialized when needed
 
 
 def render_chat():
+    # Initialize agent when Streamlit is ready
+    if "agent_initialized" not in st.session_state:
+        agent_ready_marker()
+        st.session_state.agent_initialized = True
+    
     col1, col2 = st.columns([6, 2])
     with col1:
         # Display Horizon logo

@@ -54,16 +54,18 @@ def run_sync(coro):
     try:
         return asyncio.run(coro)
     except RuntimeError:
-        # If there's already an event loop running, create a new task
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # Create a new task and wait for it
+        # If there's already an event loop running, use the newer API
+        try:
+            # Try to get the running loop (newer API)
+            loop = asyncio.get_running_loop()
+            # If we get here, there's already a loop running
             import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 future = executor.submit(asyncio.run, coro)
                 return future.result()
-        else:
-            return loop.run_until_complete(coro)
+        except RuntimeError:
+            # No event loop running, create a new one
+            return asyncio.run(coro)
 
 
 def get_local_context() -> RequestContext:
