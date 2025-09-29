@@ -56,7 +56,7 @@ python-multipart==0.0.6
 
 requests>=2.31.0
 
-
+-e .
 # Note: This is a simplified requirements file.
 # For production use, install with: uv sync
 # This will use the pyproject.toml for exact version pinning
