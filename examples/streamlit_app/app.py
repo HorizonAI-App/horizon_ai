@@ -4,8 +4,6 @@ from pathlib import Path
 
 from sam.web.session import run_with_events, run_once, get_agent
 
-
-
 # Ensure local module imports work when run via `streamlit run`
 _APP_DIR = Path(__file__).resolve().parent
 if str(_APP_DIR) not in sys.path:
@@ -40,15 +38,11 @@ except Exception:
 inject_css()
 ensure_session_init()
 ensure_env_loaded()
-# Agent will be initialized when needed
+agent_ready_marker()
+# Agent starts automatically when first accessed
 
 
 def render_chat():
-    # Initialize agent when Streamlit is ready
-    if "agent_initialized" not in st.session_state:
-        agent_ready_marker()
-        st.session_state.agent_initialized = True
-    
     col1, col2 = st.columns([6, 2])
     with col1:
         # Display Horizon logo

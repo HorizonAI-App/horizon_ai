@@ -1,5 +1,7 @@
 import asyncio
 from pathlib import Path
+import asyncio
+from pathlib import Path
 import streamlit as st
 
 from sam.web.session import get_agent
@@ -50,49 +52,52 @@ def ensure_session_init():
 
 
 def run_sync(coro):
-    """Run an async coroutine safely in any context."""
-    import threading
-    import concurrent.futures
-    
-    def run_in_thread():
+    """Run an async coroutine in both fresh and existing event loop contexts."""
+    try:
         return asyncio.run(coro)
-    
-    # Always run in a separate thread to avoid event loop conflicts
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        future = executor.submit(run_in_thread)
-        return future.result()
+    except RuntimeError:
+        # If there's already an event loop running, create a new task
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Create a new task and wait for it
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, coro)
+                return future.result()
+        else:
+            return loop.run_until_complete(coro)
 
 
 def get_local_context() -> RequestContext:
     """Return a request context suitable for local Streamlit usage with proper user isolation."""
     session_id = st.session_state.get("session_id", "default")
     
-    # Generate unique user ID that's truly isolated per browser session
-    # This ensures complete user isolation by not caching user_id in session state
-    import hashlib
-    import secrets
-    import time
+    # Generate unique user ID based on browser session
+    # This ensures each browser session gets isolated data
+    if "user_id" not in st.session_state:
+        import hashlib
+        import secrets
+        
+        # Create a unique user ID based on browser session
+        # Use Streamlit's session state ID + a random component
+        browser_session_id = st.session_state.get("_browser_session_id", secrets.token_hex(16))
+        st.session_state["_browser_session_id"] = browser_session_id
+        
+        # Create a deterministic but unique user ID
+        user_id = hashlib.sha256(f"horizon-{browser_session_id}".encode()).hexdigest()[:16]
+        st.session_state["user_id"] = user_id
     
-    # Create a unique identifier that changes for each new browser session
-    # Use timestamp + random data + session state ID for maximum uniqueness
-    browser_fingerprint = f"{time.time()}-{secrets.token_hex(8)}-{id(st.session_state)}"
-    user_id = hashlib.sha256(f"horizon-{browser_fingerprint}".encode()).hexdigest()[:16]
-    
+    user_id = st.session_state["user_id"]
     return RequestContext(user_id=user_id, session_id=session_id)
 
 
 @st.cache_resource(show_spinner=False)
 def agent_ready_marker() -> bool:
-    try:
-        async def _build():
-            await get_agent(get_local_context())
+    async def _build():
+        await get_agent(get_local_context())
 
-        run_sync(_build())
-        return True
-    except Exception as e:
-        # If agent initialization fails, return False and let it retry later
-        print(f"Agent initialization failed: {e}")
-        return False
+    run_sync(_build())
+    return True
 
 
 def clear_agent_cache():
