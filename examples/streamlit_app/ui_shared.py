@@ -19,16 +19,9 @@ def inject_css():
 def ensure_env_loaded():
     from sam.utils.env_files import find_env_path
     from dotenv import load_dotenv
-    import os
 
-    # Load from .env file first
     env_path = find_env_path()
     load_dotenv(env_path, override=True)
-    
-    # Load database path from Streamlit secrets (for deployment)
-    if hasattr(st, 'secrets') and 'SAM_DB_PATH' in st.secrets:
-        os.environ['SAM_DB_PATH'] = str(st.secrets['SAM_DB_PATH'])
-    
     Settings.refresh_from_env()
 
 
