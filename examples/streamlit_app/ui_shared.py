@@ -50,22 +50,17 @@ def ensure_session_init():
 
 
 def run_sync(coro):
-    """Run an async coroutine in both fresh and existing event loop contexts."""
-    try:
+    """Run an async coroutine safely in any context."""
+    import threading
+    import concurrent.futures
+    
+    def run_in_thread():
         return asyncio.run(coro)
-    except RuntimeError:
-        # If there's already an event loop running, use the newer API
-        try:
-            # Try to get the running loop (newer API)
-            loop = asyncio.get_running_loop()
-            # If we get here, there's already a loop running
-            import concurrent.futures
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(asyncio.run, coro)
-                return future.result()
-        except RuntimeError:
-            # No event loop running, create a new one
-            return asyncio.run(coro)
+    
+    # Always run in a separate thread to avoid event loop conflicts
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(run_in_thread)
+        return future.result()
 
 
 def get_local_context() -> RequestContext:
@@ -88,11 +83,16 @@ def get_local_context() -> RequestContext:
 
 @st.cache_resource(show_spinner=False)
 def agent_ready_marker() -> bool:
-    async def _build():
-        await get_agent(get_local_context())
+    try:
+        async def _build():
+            await get_agent(get_local_context())
 
-    run_sync(_build())
-    return True
+        run_sync(_build())
+        return True
+    except Exception as e:
+        # If agent initialization fails, return False and let it retry later
+        print(f"Agent initialization failed: {e}")
+        return False
 
 
 def clear_agent_cache():
