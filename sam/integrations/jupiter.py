@@ -30,8 +30,8 @@ QuoteResponse = Dict[str, Any]
 class JupiterTools:
     def __init__(self, solana_tools: Optional[SolanaTools] = None) -> None:
         # Jupiter v6 Quote/Swap API base
-        self.base_url = "https://quote-api.jup.ag/v6"
-        self.price_url = "https://api.jup.ag/price/v3"
+        self.base_url = "https://lite-api.jup.ag/swap/v1/"
+        self.price_url = "https://lite-api.jup.ag/price/v3/"
         self.solana_tools = solana_tools
 
     async def close(self) -> None:
@@ -367,15 +367,38 @@ class JupiterTools:
 
                 logger.info(f"Swap transaction executed successfully: {tx_hash}")
 
-                return {
-                    "success": True,
-                    "input_mint": input_mint,
-                    "output_mint": output_mint,
-                    "input_amount": amount,
-                    "expected_output_amount": quote_result.get("output_amount", 0),
-                    "price_impact_pct": quote_result.get("price_impact_pct", 0),
-                    "transaction_id": str(tx_hash),
-                }
+                # After successful transaction, get token decimals and adjust amount
+                try:
+                    # Get token metadata to find decimal places
+                    token_info = await self.get_token_price(output_mint)
+                    decimals = token_info.get("decimals", 6)  # Default to 6 if not found
+                    
+                    # Convert from smallest units to display units
+                    raw_amount = quote_result.get("output_amount", 0)
+                    display_amount = raw_amount / (10 ** decimals)
+                    
+                    return {
+                        "success": True,
+                        "input_mint": input_mint,
+                        "output_mint": output_mint,
+                        "input_amount": amount,
+                        "expected_output_amount": quote_result.get("output_amount", 0),
+                        "display_output_amount": display_amount,  # Add this
+                        "decimals": decimals,  # Add this
+                        "price_impact_pct": quote_result.get("price_impact_pct", 0),
+                        "transaction_id": str(tx_hash),
+                    }
+                except Exception as e:
+                    # Fallback to original behavior
+                    return {
+                        "success": True,
+                        "input_mint": input_mint,
+                        "output_mint": output_mint,
+                        "input_amount": amount,
+                        "expected_output_amount": quote_result.get("output_amount", 0),
+                        "price_impact_pct": quote_result.get("price_impact_pct", 0),
+                        "transaction_id": str(tx_hash),
+                    }
 
             except Exception as sign_error:
                 logger.error(f"Failed to execute swap transaction: {sign_error}")
