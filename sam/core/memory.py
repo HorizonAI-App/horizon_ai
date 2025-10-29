@@ -100,6 +100,38 @@ class MemoryManager:
                         "CREATE INDEX IF NOT EXISTS idx_trades_timestamp ON trades(timestamp)"
                     )
 
+                    # Create scheduled_transactions table
+                    await conn.execute("""
+                        CREATE TABLE IF NOT EXISTS scheduled_transactions (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            user_id TEXT NOT NULL,
+                            transaction_type TEXT NOT NULL,
+                            tool_name TEXT NOT NULL,
+                            parameters TEXT NOT NULL,
+                            schedule_type TEXT NOT NULL,
+                            schedule_config TEXT NOT NULL,
+                            status TEXT NOT NULL DEFAULT 'pending',
+                            created_at TEXT NOT NULL,
+                            next_execution TEXT,
+                            last_execution TEXT,
+                            execution_count INTEGER DEFAULT 0,
+                            max_executions INTEGER,
+                            error_message TEXT,
+                            metadata TEXT
+                        )
+                    """)
+                    
+                    # Create indexes for scheduled_transactions
+                    await conn.execute(
+                        "CREATE INDEX IF NOT EXISTS idx_scheduled_transactions_user ON scheduled_transactions(user_id)"
+                    )
+                    await conn.execute(
+                        "CREATE INDEX IF NOT EXISTS idx_scheduled_transactions_next_execution ON scheduled_transactions(next_execution)"
+                    )
+                    await conn.execute(
+                        "CREATE INDEX IF NOT EXISTS idx_scheduled_transactions_status ON scheduled_transactions(status)"
+                    )
+
                     # Create secure_data table
                     await conn.execute("""
                         CREATE TABLE IF NOT EXISTS secure_data (

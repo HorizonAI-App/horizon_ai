@@ -11,8 +11,8 @@ from sam.integrations.aster_futures import AsterFuturesClient, create_aster_futu
 @pytest.fixture
 def client() -> AsterFuturesClient:
     client = AsterFuturesClient(
-        api_key="dbefbc809e3e83c283a984c3a1459732ea7db1360ca80c5c2c8867408d28cc83",
-        api_secret="2b5eb11e18796d12d88f13dc27dbbd02c2cc51ff7059765ed9821957d82bb4d9",
+        api_key="426912fc5f7f0637511f4b0708a161f08db5f79a9138f1b9b2c0e1da948348b5",
+        api_secret="2cea83b0e17ae9e7e6bf135057730c0747807422bf7a23000b2258a5b5cff00b",
         default_recv_window=5000,
     )
     client._symbol_filters["SOLUSDT"] = {

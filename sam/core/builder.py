@@ -32,6 +32,9 @@ from ..integrations.smart_trader import SmartTrader, create_smart_trader_tools
 from ..integrations.frontend_auth import register as register_frontend_auth
 from ..integrations.defi_strategy_tools import register as register_defi_strategy_tools
 from .plugins import load_plugins
+from .scheduler import SchedulerService
+from .scheduler.tools import create_scheduler_tools, set_scheduler_user_context
+from .time_tools import create_time_tools
 
 logger = logging.getLogger(__name__)
 
@@ -446,6 +449,29 @@ class AgentBuilder:
         except Exception as e:
             logger.warning(f"Failed to register smart trader tools: {e}")
 
+        # Scheduler service for scheduled transactions
+        scheduler_service = None
+        try:
+            from .events import get_event_bus
+            event_bus = get_event_bus()
+            scheduler_service = SchedulerService(memory, event_bus)
+            scheduler_service.set_tool_registry(tools)
+            
+            # Register scheduler tools
+            for tool in create_scheduler_tools(scheduler_service):
+                tools.register(tool)
+            
+            # Register time calculation tools
+            for tool in create_time_tools():
+                tools.register(tool)
+            
+            # Start the scheduler service
+            await scheduler_service.start()
+            
+            logger.info("Scheduler service initialized and started")
+        except Exception as e:
+            logger.warning(f"Failed to initialize scheduler service: {e}")
+
         # Keep references (mypy-friendly) as before
         setattr(agent, "_solana_tools", solana_tools)
         setattr(agent, "_pump_tools", pump_tools)
@@ -454,6 +480,7 @@ class AgentBuilder:
         setattr(agent, "_search_tools", search_tools)
         setattr(agent, "_polymarket_tools", polymarket_tools)
         setattr(agent, "_aster_client", aster_client)
+        setattr(agent, "_scheduler_service", scheduler_service)
         setattr(agent, "_llm", llm)
 
 

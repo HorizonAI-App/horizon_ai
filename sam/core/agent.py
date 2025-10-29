@@ -50,6 +50,16 @@ class SAMAgent:
             "token_metadata": {},  # {mint: metadata_dict}
         }
 
+    def set_user_context(self, user_id: str) -> None:
+        """Set user context for scheduler and other user-specific services."""
+        user_id = _normalize_user_id(user_id)
+        
+        # Set scheduler user context if available
+        scheduler_service = getattr(self, "_scheduler_service", None)
+        if scheduler_service:
+            from .scheduler.tools import set_scheduler_user_context
+            set_scheduler_user_context(scheduler_service, user_id)
+
     async def run(
         self,
         user_input: str,
@@ -62,6 +72,9 @@ class SAMAgent:
         logger.info(f"Starting agent run for session {session_id}")
 
         user_id = _normalize_user_id(context.user_id if context else None)
+        
+        # Set user context for scheduler and other services
+        self.set_user_context(user_id)
 
         # Signal run start for UIs
         try:

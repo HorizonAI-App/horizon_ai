@@ -15,6 +15,7 @@ import os
 import shutil
 import sys
 import textwrap
+from datetime import datetime, timezone
 from types import TracebackType
 from typing import Any, Optional, cast
 
@@ -959,6 +960,79 @@ async def run_interactive_session(
     return 0
 
 
+async def run_futures_trading_session(
+    session_id: str,
+    no_animation: bool = False,
+    *,
+    clear_sessions: bool = False,
+) -> int:
+    """Run interactive futures trading session."""
+    # Show fast glitch intro (unless disabled)
+    if not no_animation:
+        await show_sam_intro("glitch")
+
+    agent: SAMAgent | None = None
+    # Initialize futures trading agent
+    try:
+        async with Spinner("Loading Futures Trading Agent"):
+            from .core.futures_agent_builder import FuturesAgentBuilder
+            builder = FuturesAgentBuilder()
+            agent = await builder.build(session_id=session_id)
+
+    except Exception as e:
+        print(f"{colorize('❌ Failed to initialize futures trading agent:', Style.FG_YELLOW)} {e}")
+        return 1
+
+    # Clear sessions if requested
+    if clear_sessions:
+        try:
+            from .core.memory_provider import create_memory_manager
+            memory = create_memory_manager()
+            await memory.clear_all_sessions()
+            print(f"{colorize('✅ Cleared all conversation sessions', Style.FG_GREEN)}")
+        except Exception as e:
+            print(f"{colorize('⚠️  Failed to clear sessions:', Style.FG_YELLOW)} {e}")
+
+    # Show futures trading welcome message
+    print()
+    print(colorize("🚀 Aster Futures Trading Agent", Style.BOLD, Style.FG_CYAN))
+    print(colorize("Professional leveraged trading on Aster DEX", Style.FG_BLUE))
+    print()
+    print(colorize("Available Commands:", Style.BOLD))
+    print(f"  {colorize('Check account balance', Style.FG_GREEN)}     - aster_account_balance()")
+    print(f"  {colorize('Open long position', Style.FG_GREEN)}       - aster_open_long(symbol, usd_notional, leverage)")
+    print(f"  {colorize('Close position', Style.FG_GREEN)}          - aster_close_position(symbol)")
+    print(f"  {colorize('Check positions', Style.FG_GREEN)}         - aster_position_check(symbol)")
+    print(f"  {colorize('View trade history', Style.FG_GREEN)}      - aster_trade_history(symbol)")
+    print()
+    print(colorize("Example: 'Open a $100 long position on SOL with 5x leverage'", Style.FG_YELLOW))
+    print()
+
+    # Run the REPL
+    try:
+        from .core.repl import run_repl
+        return await run_repl(agent, session_id)
+    except KeyboardInterrupt:
+        print(f"\n{colorize('👋 Futures trading session ended', Style.FG_CYAN)}")
+        return 0
+    except Exception as e:
+        print(f"{colorize('❌ Session error:', Style.FG_RED)} {e}")
+        return 1
+    finally:
+        # Cleanup
+        if agent:
+            try:
+                await asyncio.wait_for(cleanup_agent(agent), timeout=2.0)
+            except asyncio.TimeoutError:
+                # Force exit if cleanup takes too long
+                pass
+            except Exception:
+                # Ignore all cleanup errors
+                pass
+
+    return 0
+
+
 def print_help() -> None:
     """Print available commands and usage."""
     print()
@@ -1024,6 +1098,143 @@ async def test_provider(provider_name: Optional[str] = None) -> int:
 # moved to sam.commands.health.run_health_check
 
 
+async def handle_schedule_commands(args) -> int:
+    """Handle scheduler-related CLI commands."""
+    try:
+        # Create a minimal agent to access scheduler service
+        factory = get_default_factory()
+        agent = await factory.build_agent()
+        
+        scheduler_service = getattr(agent, "_scheduler_service", None)
+        if not scheduler_service:
+            print("❌ Scheduler service not available")
+            return 1
+        
+        if args.schedule_action == "list":
+            # List scheduled transactions
+            transactions = await scheduler_service.list_user_transactions("default")
+            
+            if not transactions:
+                print("📅 No scheduled transactions found")
+                return 0
+            
+            print(f"📅 Found {len(transactions)} scheduled transactions:")
+            print()
+            
+            for tx in transactions:
+                status_emoji = {
+                    "pending": "⏳",
+                    "executed": "✅", 
+                    "failed": "❌",
+                    "cancelled": "🚫",
+                    "expired": "⏰"
+                }.get(tx.status.value, "❓")
+                
+                print(f"{status_emoji} ID: {tx.id}")
+                print(f"   Tool: {tx.tool_name}")
+                print(f"   Status: {tx.status.value}")
+                print(f"   Created: {tx.created_at.strftime('%Y-%m-%d %H:%M:%S')}")
+                if tx.next_execution:
+                    print(f"   Next: {tx.next_execution.strftime('%Y-%m-%d %H:%M:%S')}")
+                if tx.execution_count > 0:
+                    print(f"   Executions: {tx.execution_count}")
+                if tx.error_message:
+                    print(f"   Error: {tx.error_message}")
+                if tx.metadata and tx.metadata.get("notes"):
+                    print(f"   Notes: {tx.metadata['notes']}")
+                print()
+            
+            return 0
+            
+        elif args.schedule_action == "status":
+            # Show scheduler status
+            print("🕐 Scheduler Service Status:")
+            print(f"   Running: {'✅ Yes' if scheduler_service.running else '❌ No'}")
+            print(f"   Background Task: {'✅ Active' if scheduler_service._task and not scheduler_service._task.done() else '❌ Inactive'}")
+            print(f"   Tool Registry: {'✅ Set' if scheduler_service._tool_registry else '❌ Not Set'}")
+            print(f"   Executor: {'✅ Available' if scheduler_service._executor else '❌ Not Available'}")
+            return 0
+            
+        elif args.schedule_action == "cancel":
+            # Cancel a transaction
+            success = await scheduler_service.cancel_transaction(args.transaction_id, "default")
+            if success:
+                print(f"✅ Cancelled transaction {args.transaction_id}")
+                return 0
+            else:
+                print(f"❌ Failed to cancel transaction {args.transaction_id} (not found or already processed)")
+                return 1
+        
+        else:
+            print("❌ Unknown schedule action. Use 'list', 'status', or 'cancel'")
+            return 1
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return 1
+
+
+async def execute_pending_transactions() -> int:
+    """Manually execute pending scheduled transactions."""
+    try:
+        # Create agent to get scheduler service
+        factory = get_default_factory()
+        agent = await factory.build_agent()
+        scheduler_service = getattr(agent, "_scheduler_service", None)
+        
+        if not scheduler_service:
+            print("❌ Scheduler service not available")
+            return 1
+        
+        print("🔄 Executing pending scheduled transactions...")
+        
+        # Get pending transactions
+        pending_transactions = await scheduler_service.list_user_transactions("default", status=None)
+        due_transactions = [tx for tx in pending_transactions if tx.status.value == "pending" and tx.next_execution and tx.next_execution <= datetime.now(timezone.utc)]
+        
+        if not due_transactions:
+            print("✅ No pending transactions due for execution")
+            return 0
+        
+        print(f"📋 Found {len(due_transactions)} pending transactions")
+        
+        # Execute each transaction
+        executed_count = 0
+        failed_count = 0
+        
+        for tx in due_transactions:
+            try:
+                print(f"🔄 Executing transaction {tx.id}: {tx.tool_name}")
+                
+                # Execute the transaction
+                result = await scheduler_service._executor.execute_transaction(tx)
+                
+                if isinstance(result, dict) and result.get("error"):
+                    print(f"❌ Transaction {tx.id} failed: {result['error']}")
+                    await scheduler_service._mark_transaction_failed(tx.id, result["error"])
+                    failed_count += 1
+                else:
+                    print(f"✅ Transaction {tx.id} executed successfully")
+                    await scheduler_service._mark_transaction_executed(tx, result)
+                    executed_count += 1
+                    
+            except Exception as e:
+                print(f"❌ Transaction {tx.id} failed with exception: {e}")
+                await scheduler_service._mark_transaction_failed(tx.id, str(e))
+                failed_count += 1
+        
+        print(f"\n📊 Execution Summary:")
+        print(f"   ✅ Executed: {executed_count}")
+        print(f"   ❌ Failed: {failed_count}")
+        print(f"   📋 Total: {len(due_transactions)}")
+        
+        return 0 if failed_count == 0 else 1
+        
+    except Exception as e:
+        print(f"❌ Error executing pending transactions: {e}")
+        return 1
+
+
 async def main() -> int:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(description="SAM Framework CLI")
@@ -1038,6 +1249,20 @@ async def main() -> int:
         "--no-animation", action="store_true", help="Skip startup animation for faster loading"
     )
     run_parser.add_argument(
+        "--clear-sessions",
+        action="store_true",
+        help="Delete all saved conversation sessions before starting",
+    )
+
+    # Futures trading command
+    futures_parser = subparsers.add_parser("futures", help="Start the Aster futures trading agent")
+    futures_parser.add_argument(
+        "--session", "-s", default="futures", help="Session ID for futures trading context"
+    )
+    futures_parser.add_argument(
+        "--no-animation", action="store_true", help="Skip startup animation for faster loading"
+    )
+    futures_parser.add_argument(
         "--clear-sessions",
         action="store_true",
         help="Delete all saved conversation sessions before starting",
@@ -1081,6 +1306,20 @@ async def main() -> int:
     subparsers.add_parser("maintenance", help="Database maintenance and cleanup")
     subparsers.add_parser("onboard", help="Run onboarding setup")
     subparsers.add_parser("debug", help="Show runtime plugins and middleware")
+    
+    # Scheduler management
+    scheduler_parser = subparsers.add_parser("schedule", help="Manage scheduled transactions")
+    scheduler_subparsers = scheduler_parser.add_subparsers(dest="schedule_action")
+    scheduler_subparsers.add_parser("list", help="List scheduled transactions")
+    scheduler_subparsers.add_parser("status", help="Show scheduler service status")
+    cancel_parser = scheduler_subparsers.add_parser("cancel", help="Cancel a scheduled transaction")
+    cancel_parser.add_argument("transaction_id", type=int, help="ID of transaction to cancel")
+    
+    # Scheduler daemon
+    subparsers.add_parser("scheduler-daemon", help="Run scheduler daemon in background")
+    
+    # Execute pending transactions
+    subparsers.add_parser("execute-pending", help="Manually execute pending scheduled transactions")
 
     plugins_parser = subparsers.add_parser(
         "plugins", help="Manage plugin trust policy and allowlist"
@@ -1352,6 +1591,44 @@ async def main() -> int:
         session_id = getattr(args, "session", "default")
         no_animation = getattr(args, "no_animation", False)
         return await run_interactive_session(session_id, no_animation, clear_sessions=getattr(args, "clear_sessions", False))
+
+    if args.command == "futures":
+        # FIRST: Ensure .env is loaded before checking anything
+        from dotenv import load_dotenv
+
+        # Prefer a stable .env location (CWD/repo) over module path
+        env_path = find_env_path()
+        load_dotenv(env_path, override=True)
+
+        # Refresh Settings from current environment to avoid stale class attributes
+        Settings.refresh_from_env()
+
+        # Check if Aster futures tools are enabled
+        if not Settings.ENABLE_ASTER_FUTURES_TOOLS:
+            print(CLIFormatter.error("Aster futures tools are disabled. Set ENABLE_ASTER_FUTURES_TOOLS=true"))
+            return 1
+
+        # Check for Aster API credentials
+        if not Settings.ASTER_API_KEY or not Settings.ASTER_API_SECRET:
+            print(CLIFormatter.error("Aster API credentials not found. Set ASTER_API_KEY and ASTER_API_SECRET"))
+            return 1
+
+        session_id = args.session
+        no_animation = getattr(args, "no_animation", False)
+        
+        return await run_futures_trading_session(session_id, no_animation, clear_sessions=getattr(args, "clear_sessions", False))
+
+    if args.command == "schedule":
+        return await handle_schedule_commands(args)
+    
+    if args.command == "scheduler-daemon":
+        # Run scheduler daemon
+        from .commands.scheduler_daemon import run_scheduler_daemon
+        return await run_scheduler_daemon()
+    
+    if args.command == "execute-pending":
+        # Manually execute pending scheduled transactions
+        return await execute_pending_transactions()
 
     return 1
 

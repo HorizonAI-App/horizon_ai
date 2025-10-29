@@ -56,7 +56,7 @@ class Settings:
         os.getenv("ENABLE_POLYMARKET_TOOLS", "true").lower() == "true"
     )
     ENABLE_ASTER_FUTURES_TOOLS: bool = (
-        os.getenv("ENABLE_ASTER_FUTURES_TOOLS", "false").lower() == "true"
+        os.getenv("ENABLE_ASTER_FUTURES_TOOLS", "true").lower() == "true"
     )
 
     # Aster futures configuration
@@ -127,7 +127,7 @@ class Settings:
             os.getenv("ENABLE_POLYMARKET_TOOLS", "true").lower() == "true"
         )
         cls.ENABLE_ASTER_FUTURES_TOOLS = (
-            os.getenv("ENABLE_ASTER_FUTURES_TOOLS", "false").lower() == "true"
+            os.getenv("ENABLE_ASTER_FUTURES_TOOLS", "true").lower() == "true"
         )
 
         cls.ASTER_BASE_URL = os.getenv("ASTER_BASE_URL", "https://fapi.asterdex.com")
